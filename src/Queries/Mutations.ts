@@ -55,7 +55,6 @@ export const Mutation = {
             throw new GraphQLError("CV not found");
         }
         db.cvs = db.cvs.filter((cv)=>cv.id !== id);
-       findCV.user.cvs = findCV.user.cvs.filter((cv)=>cv.id !== id);
         pubsub.publish("CVUpdates", { CVUpdated: findCV });
         return true;  
     },
