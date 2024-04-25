@@ -22,7 +22,7 @@ export const Mutation = {
 
         db.cvs.push(newCV);
         
-        pubsub.publish("CV_ADDED", { CVAdded: newCV });
+        pubsub.publish("CV_ADDED", { CVUpdated:newCV });
         return newCV;
     },
     updateCV(_,{id,input},{db,pubsub}){
@@ -31,7 +31,7 @@ export const Mutation = {
         if(!findCV){
             throw new GraphQLError("CV not found");
         }
-        const find_user = db.users.find((user)=>user.id === input.user_id);
+        const find_user = db.users.find((user)=>user.id === input.userId);
         if(!find_user){
             throw new GraphQLError("User not found");
         }
@@ -49,12 +49,14 @@ export const Mutation = {
     },
     deleteCV: (_,{id},{db,pubsub}) => { 
         const findCV = db.cvs.find((cv)=>cv.id === id);
+        //find user with cv
+        
         if(!findCV){
             throw new GraphQLError("CV not found");
         }
         db.cvs = db.cvs.filter((cv)=>cv.id !== id);
-        findCV.user.cvs = findCV.user.cvs.filter((cv)=>cv.id !== id);
-        pubsub.publish("CV_DELETED", { CVDeleted: findCV });
-        return findCV;  
+       findCV.user.cvs = findCV.user.cvs.filter((cv)=>cv.id !== id);
+        pubsub.publish("CV_DELETED", { CVUpdated: findCV });
+        return true;  
     },
 };

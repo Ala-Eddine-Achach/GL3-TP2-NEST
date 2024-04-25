@@ -21,6 +21,7 @@ type CV  {
 type Skill  {
   id: Int!
   designation: String!
+  cvs: [CV!]!
 }
 
 #deux inputs pour l’ajout et la modification d’un cv.
@@ -53,9 +54,6 @@ type Mutation {
 }
 
 type Subscription {
-  CVAdded: CV!
   CVUpdated: CV!
-  CVDeleted: Int!
-
 }
 
