@@ -3,9 +3,12 @@ import { resolve } from "path";
 export const Subscription = {
     
     CVUpdated: {
-        subscribe: (_, __, { pubsub }) => pubsub.asyncIterator("CV_UPDATED"),
+        subscribe: (_, __, { pubsub })=>{
+             console.log('subscribed');
+            return pubsub.subscribe('CVUpdates');},
         resolve: (payload) => {
-            return payload;
+            console.log(payload);
+            return payload.CVUpdated;
         }
     },
     

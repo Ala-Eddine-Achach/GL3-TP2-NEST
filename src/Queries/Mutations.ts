@@ -22,7 +22,7 @@ export const Mutation = {
 
         db.cvs.push(newCV);
         
-        pubsub.publish("CV_ADDED", { CVUpdated:newCV });
+        pubsub.publish("CVUpdates", { CVUpdated:newCV });
         return newCV;
     },
     updateCV(_,{id,input},{db,pubsub}){
@@ -44,7 +44,7 @@ export const Mutation = {
         if(input.skills)
         findCV.skills = input.skills;
         findCV.user = find_user;
-        pubsub.publish("CV_UPDATED", { CVUpdated: findCV });
+        pubsub.publish("CVUpdates", { CVUpdated: findCV });
         return findCV;
     },
     deleteCV: (_,{id},{db,pubsub}) => { 
@@ -56,7 +56,7 @@ export const Mutation = {
         }
         db.cvs = db.cvs.filter((cv)=>cv.id !== id);
        findCV.user.cvs = findCV.user.cvs.filter((cv)=>cv.id !== id);
-        pubsub.publish("CV_DELETED", { CVUpdated: findCV });
+        pubsub.publish("CVUpdates", { CVUpdated: findCV });
         return true;  
     },
 };

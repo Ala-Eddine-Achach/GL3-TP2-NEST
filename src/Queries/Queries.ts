@@ -3,6 +3,12 @@ import { GraphQLError } from "graphql";
 import { Extension } from "typescript";
 
 export const  CV= {
+    id: ({id}) => id||0,
+    name: ({name}) => name||"",
+    age: ({age}) => age||"",
+    job: ({job}) => job||"",
+    
+    
     user: ({user}, _, {db}) => {
         return {id: user.id, name: user.name, email: user.email, role: user.role};    
     },

@@ -40,6 +40,7 @@ input UpdateCVInput {
   skillIds: [Int]
   userId: Int!
 }
+ 
 
 
 type Query {
@@ -54,6 +55,6 @@ type Mutation {
 }
 
 type Subscription {
-  CVUpdated: CV!
+  CVUpdated:  CV!
 }
 
