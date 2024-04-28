@@ -1,61 +1,100 @@
 import { GraphQLError } from "graphql";
+import { PrismaClient } from '@prisma/client';
+import { connect } from "http2";
+const prisma = new PrismaClient();
 export const Mutation = {
-    createCV: (_,{input},{db,pubsub} ) => {
-        const find_user = db.users.find((user)=>user.id === input.userId);
-        if(!find_user){
-            console.log(input.userId);
+    createCV: async(_,{input},{pubsub} ) => {
+
+        const find_user = await prisma.user.findUnique({
+            where: {
+                id: input.userId
+            }
+        });
+        if (!find_user) {
             throw new GraphQLError("User not found");
         }
-        //random id
-        var id= Math.floor(Math.random() * 1000);
-        while(db.cvs.find((cv)=>cv.id === id)){
-            id= Math.floor(Math.random() * 1000);
-        }
-        const newCV = {
-            id: id,
-            name: input.name,
-            age: input.age,
-            job: input.job,
-            skills: input.skills,
-            user: find_user,
-        };
-
-        db.cvs.push(newCV);
-        
-        pubsub.publish("CVUpdates", { CVUpdated:newCV });
+        const newCV = await prisma.cV.create({
+            data: {
+                name: input.name,
+                age: input.age,
+                job: input.job,
+                skills: {
+                    connect: input.skills
+                },
+                user: {
+                    connect: {
+                        id: input.userId
+                    }
+                }
+            }
+        });
+        pubsub.publish("CVUpdates", { CVCreated: newCV });
+        console.log(newCV);
         return newCV;
+       
     },
-    updateCV(_,{id,input},{db,pubsub}){
-
-        const findCV = db.cvs.find((cv)=>cv.id === id);
-        if(!findCV){
+    updateCV: async (_, { id, input }, { prisma, pubsub }) => {
+        const findCV = await prisma.cV.findUnique({
+            where: { id }
+        });
+        if (!findCV) {
             throw new GraphQLError("CV not found");
         }
-        const find_user = db.users.find((user)=>user.id === input.userId);
-        if(!find_user){
+        const finduser = await prisma.user.findUnique({
+            where: {
+                id: findCV.userId
+            }
+        });
+        const newuser = await prisma.user.findUnique({
+            where: {
+                id: input.userId
+        }});
+
+           
+        if (!finduser) {
             throw new GraphQLError("User not found");
         }
-        if(input.name)
-        findCV.name = input.name;
-        if(input.age)
-        findCV.age = input.age;
-        if(input.job)
-        findCV.job = input.job;
-        if(input.skills)
-        findCV.skills = input.skills;
-        findCV.user = find_user;
-        pubsub.publish("CVUpdates", { CVUpdated: findCV });
-        return findCV;
+        if (!newuser) {
+            throw new GraphQLError("new user not found");
+        }
+    
+        const updatedCV = await prisma.cV.update({
+            where: { id },
+            data: {
+                name: input.name || findCV.name,
+                age: input.age || findCV.age,
+                job: input.job || findCV.job,
+                skills: {
+                    connect: input.skills||findCV.skills
+                },
+                user: {
+                    connect: { id: input.userId||findCV.userId }
+                }
+            }
+        });
+    
+        pubsub.publish("CVUpdates", { CVUpdated: updatedCV });
+        return updatedCV;
     },
-    deleteCV: (_,{id},{db,pubsub}) => { 
-        const findCV = db.cvs.find((cv)=>cv.id === id);
-        //find user with cv
-        
-        if(!findCV){
+    
+    
+    deleteCV:async (_,{id},{pubsub}) => { 
+        const findCV = await prisma.cV.findUnique({
+            where: {
+                id
+            }
+        });
+        if (!findCV) {
             throw new GraphQLError("CV not found");
         }
-        db.cvs = db.cvs.filter((cv)=>cv.id !== id);
-        pubsub.publish("CVUpdates", { CVUpdated: findCV });
-        return true;  
+        const deletedCV = await prisma.cV.delete({
+            where: {
+                id
+            }
+        });
+        pubsub.publish("CVUpdates", { CVDeleted: deletedCV });
+        console.log("CV deleted :");
+        console.log(deletedCV);
+        return true;
     },
 };

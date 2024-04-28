@@ -1,7 +1,8 @@
 import { log } from "console";
 import { GraphQLError } from "graphql";
 import { Extension } from "typescript";
-
+import { PrismaClient } from '@prisma/client';
+const prisma = new PrismaClient();
 export const  CV= {
     id: ({id}) => id||0,
     name: ({name}) => name||"",
@@ -9,11 +10,27 @@ export const  CV= {
     job: ({job}) => job||"",
     
     
-    user: ({user}, _, {db}) => {
-        return {id: user.id, name: user.name, email: user.email, role: user.role};    
+    user: async({userId}, _, {}) => {
+        console.log("userId is kll");
+        console.log(userId);
+        
+        return await prisma.user.findUnique({
+            where: {
+                id: userId
+            }
+        });  
     },
-    skills: ({skills}, __, {db}) => {
-           return skills;
+    skills:async ({id}, __, {db}) => {
+        return await prisma.skill.findMany({
+            where: {
+                cvs: {
+                    some: {
+                        id
+                    }
+                }
+            }
+        });
+           
     },
 }
 
@@ -21,35 +38,69 @@ export const  CV= {
 
 
 export const Query = {
-    CVsFetch:(_,__,{db})=>{
-        console.log("CVsFetch");
-        console.log(db.CVs);
-        return db.cvs;
+    CVsFetch:async(_,__,{})=>{
+        return await prisma.cV.findMany({
+            include:{
+                user : true,
+                skills:true
+            }
+        });
     },
-    CVById:(_,{id},{db})=>{
-       const findCV = db.cvs.find((cv)=>cv.id === id);
-       if(!findCV){
-           throw new GraphQLError("CV not found");
-       }
-         return findCV;
-    } ,
-    SkillsFetch:(_,__,{db})=>{
-        return db.skills;
+    CVById:async(_,{id},{})=>{
+        const cv = await prisma.cV.findUnique({
+            where:{
+                id
+            },
+            include:{
+                user:true,
+                skills:true
+            }
+        });
+      if(!cv) throw new GraphQLError("CV not found");
+        return cv;  
     },
+    SkillsFetch:async(_,__,{})=>{
+        return await prisma.skill.findMany({
+            include:{
+                cvs:true
+
+            }
+        });
+    },
+   
 }
 
 export const  Skill= {
     
-    cvs: ({ id } , _, { db }) => {
-
-        const cvfound = db.cvs.filter((cv)=>{
-            return include(cv.skills,"id",id);
-        } )
-        return cvfound;
+    cvs: async ({id}) => {
+        return await prisma.cV.findMany({
+            where: {
+                skills: {
+                    some: {
+                        id
+                    }
+                }
+            }
+        ,
+    include:{
+        user : true,
+        
+    }});
+    }
+}
+    
+export const User = {
+    id: ({id}) => id||0,
+    name: ({name}) => name||"",
+    email: ({email}) => email||"",
+    role: ({role}) => role||"",
+    cvs:async ({id}, __, {db}) => {
+        return await prisma.cV.findMany({
+            where: {
+                userId: id
+            }
+        });
     },
 }
 
-export function include (array ,attribut = "",value){
-    return array.some((element) => element[attribut] == value );
-}
 
