@@ -11,7 +11,18 @@ export const Mutation = {
             }
         });
         if (!find_user) {
-            throw new GraphQLError("User not found");
+            throw new GraphQLError("User "+input.userId+" not found");
+        }
+        const newskills=input.skillIds;
+        for(let i=0;i<newskills.length;i++){
+            const find_skill = await prisma.skill.findUnique({
+                where: {
+                    id: newskills[i]
+                }
+            });
+            if (!find_skill) {
+                throw new GraphQLError("Skill "+newskills[i]+" not found");
+            }
         }
         const newCV = await prisma.cV.create({
             data: {
@@ -56,6 +67,17 @@ export const Mutation = {
         }
         if (!newuser) {
             throw new GraphQLError("new user not found");
+        }
+        var newskills=input.skillIds;
+        for(let i=0;i<newskills.length;i++){
+            const find_skill = await prisma.skill.findUnique({
+                where: {
+                    id: newskills[i]
+                }
+            });
+            if (!find_skill) {
+                throw new GraphQLError("Skill "+newskills[i]+" not found");
+            }
         }
     
         const updatedCV = await prisma.cV.update({
